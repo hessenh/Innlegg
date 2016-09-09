@@ -49,7 +49,7 @@ ByteBuffer ciphertext = kms.encrypt(req).getCiphertextBlob();
 ```
 
 ![krypterer med customer master key][server-side-kms]
-I testen vår prøvde vi å laste opp 10 000 dokumenter til både *skattegrunnlag*- og *skatteplikt*-tabellene etter å ha kryptert dem. Det første vi oppdaget var at KMS ga feilmelding om at tjenesten bare godtar 100 forespørsler i sekundet. Et annet problem med denne løsningen var at for å kryptere et dokument måtte man sende det til KMS for så å få det krypterte dokumentet som svar. En slik kryptering tok i gjennomsnitt XXX ms. En siste begrensning er at datamengden er begrenset til 2 kB. Det vil i praksis ofte være for lite, og dermed uansett uaktelt. Den oppskriftsmessige tinærimngen er derfor å bruke *envelope encryption*.
+I testen vår prøvde vi å laste opp 10 000 dokumenter til både *skattegrunnlag*- og *skatteplikt*-tabellene etter å ha kryptert dem. Det første vi oppdaget var at KMS ga feilmelding om at tjenesten bare godtar 100 forespørsler i sekundet. Et annet problem med denne løsningen var at for å kryptere et dokument måtte man sende det til KMS for så å få det krypterte dokumentet som svar. En siste begrensning er at datamengden er begrenset til 2 kB. Det vil i praksis ofte være for lite, og dermed uansett uaktelt. Den oppskriftsmessige tinærimngen er derfor å bruke *envelope encryption*.
 
 # Envelope Encryption
 Envelope Encryption (EE) går i korte trekk ut på følgende:
