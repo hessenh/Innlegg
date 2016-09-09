@@ -27,10 +27,10 @@ Kinesis ble brukt som hendelsekilde for Lambda. Kinesis jobber med datastrømmer
 Hendelsesforløpet er som følger:
 
 1. Klienten laster opp *skattegrunnlag* og *skatteplikt* til DynamoDB.
-2. Klienten mater Kinesis med fødselsnumre og fordeler de på delstrømmer.
+2. Klienten mater Kinesis med fødselsnumre som identifikator og fordeler de på delstrømmer.
 3. Lambda-funksjonen mottar hendelser fra Kinesis-strømmer og henter *skattegrunnlag* og *skatteplikt* fra DynamoDB, beregner skatt og skriver resultat til DynamoDB.
 
-![AWS-arkitektur][AWS-arkitektur]
+![Illustrasjon av AWS-arkitektur][AWS-arkitektur]
 
 # Konsept
 For å gjøre det mulig for skatteetaten å bruke en serverløs løsing for skatteberegninger må dataene være tilstrekkelig sikret. Skattegrunnlaget og skatteplikten inneholder ikke sensitiv eller direkte identifiserende informasjon, men det er i teorien mulig å avlede informasjon som kan være kritisk for enkeltpersoner, for eksempel bostedet til mennesker som lever på hemmelig adresse. Vi bestemte oss for å kryptere skatteplikt og skattegrunnlag på klientsiden før de lastes opp til DynamoDB. Dette burde gjøre opplasting og lagring av dataene tilstrekkelig sikkert. Lambda-funksjonen henter dokumenter på samme måte som tidligere. Forskjellen er at for å kunne gjøre beregninger, må de nå dekrypteres. Når skattebergningen er fullført, krypteres resultatet før det sendes tilbake til databasen.
