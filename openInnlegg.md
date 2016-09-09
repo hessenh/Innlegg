@@ -28,19 +28,19 @@ Kinesis ble brukt som hendelsekilde for Lambda. Kinesis jobber med datastrømmer
 Hendelsesforløpet er som følger: 
 
 1. Klienten laster opp *skattegrunnlag* og *skatteplikt* til DynamoDB.
-2. Klienten mater Kinesis med fødselsnummer og fordeler de på delstrømmer.
+2. Klienten mater Kinesis med fødselsnumre og fordeler de på delstrømmer.
 3. Lambda-funksjonen mottar hendelser fra Kinesis-strømmer og henter *skattegrunnlag* og *skatteplikt* fra DynamoDB, beregner skatt og skriver resultat til DynamoDB. 
 
 ![AWS-arkitektur][AWS-arkitektur]
 
 # Konsept
 
-For å gjøre det mulig for skatteetaten å bruke en serverløs løsing for skatteberegninger må dataene være tilstrekkelig sikret. Skattegrunnlaget og skatteplikten inneholder ikke sensitiv eller direkte identifiserende informasjon, men det er i teorien mulig å avlede informasjon som kan være kritisk for enkeltpersoner, for eksempel bostedsadresse for mennesker som lever på hemmelig adresse. Vi bestemte oss for å kryptere skatteplikt og skattegrunnlag på klientsiden før de lastes opp til DynamoDB. Dette burde gjøre opplasting og lagring av dataene tilstrekkelig sikkert. Lambda-funksjonen henter dokumenter på samme måte som tidligere. Forskjellen er at for å kunne gjøre beregninger må de nå dekrypteres. Når skattebergningen er fullført, krypteres resultatet før det sendes tilbake til databasen. 
+For å gjøre det mulig for skatteetaten å bruke en serverløs løsing for skatteberegninger må dataene være tilstrekkelig sikret. Skattegrunnlaget og skatteplikten inneholder ikke sensitiv eller direkte identifiserende informasjon, men det er i teorien mulig å avlede informasjon som kan være kritisk for enkeltpersoner, for eksempel bostedet til mennesker som lever på hemmelig adresse. Vi bestemte oss for å kryptere skatteplikt og skattegrunnlag på klientsiden før de lastes opp til DynamoDB. Dette burde gjøre opplasting og lagring av dataene tilstrekkelig sikkert. Lambda-funksjonen henter dokumenter på samme måte som tidligere. Forskjellen er at for å kunne gjøre beregninger, må de nå dekrypteres. Når skattebergningen er fullført, krypteres resultatet før det sendes tilbake til databasen. 
 
-Dette var i enkle trekk den slagplanen vi la etter å blitt introdusert til prosjektet. Nå måtte vi finne ut hvordan dette kunne la seg gjøre. Det første vi trengte var en løsning for å håndtere nøkler og kryptering i AWS. AWS har en tjeneste for nøkkelhåndtering kalt Key Management Service (KMS).  Man kan opprette nøkler, kalt Customer Master Key (CMK), og sette hvilke personer og tjenester som skal ha tilgang til dem. Nøklene slipper aldri ut av KMS, for å bruke nøklene i kryptografiske operasjoner må data sendes til KMS og bli kryptert der. 
+AWS har en tjeneste for nøkkelhåndtering kalt Key Management Service (KMS), som vi ville forsøke å bruke.  Man kan opprette nøkler, kalt Customer Master Key (CMK), og sette hvilke personer og tjenester som skal ha tilgang til dem. Nøklene slipper aldri ut av KMS, for å bruke nøklene i kryptografiske operasjoner må data sendes til KMS og bli kryptert der. 
 
 # Kryptering i KMS
-For å komme i gang med KMS implementerte vi noen enkle tester for å utforske funksjonaliteten den tilbød. Vi opprettet en CMK og brukte den til å kryptere *skattegrunnlag* og *skatteplikt*. Dette ble gjort ved å sende en encryption request til KMS med klarteksten lagt ved for så å få tilbake en kryptert versjon. 
+For å komme i gang med KMS, implementerte vi noen enkle tester for å utforske funksjonaliteten den tilbød. Vi opprettet en CMK og brukte den til å kryptere *skattegrunnlag* og *skatteplikt*. Dette ble gjort ved å sende en _encryption request_ til KMS med klarteksten lagt ved, for så å få tilbake en kryptert versjon. 
 
 ```java
 String keyId = "dummy-key";
@@ -51,7 +51,7 @@ ByteBuffer ciphertext = kms.encrypt(req).getCiphertextBlob();
 ```
 
 ![krypterer med customer master key][server-side-kms]
-I testen vår prøvde vi å laste opp 10 000 dokumenter til både *skattegrunnlag*- og *skatteplikt*-tabellene. Det første vi oppdaget var at KMS ga feilmelding om at tjenesten bare godtar 100 forespørsler i sekundet. Et annet problem med denne løsningen var at for å kryptere et dokument måtte man sende det til KMS for så å få det krypterte dokumentet som svar. En slik kryptering tok i gjennomsnitt XXX ms. En siste begrensning er at datamengden er begrenset til 2 kB. 
+I testen vår prøvde vi å laste opp 10 000 dokumenter til både *skattegrunnlag*- og *skatteplikt*-tabellene etter å ha kryptert dem. Det første vi oppdaget var at KMS ga feilmelding om at tjenesten bare godtar 100 forespørsler i sekundet. Et annet problem med denne løsningen var at for å kryptere et dokument måtte man sende det til KMS for så å få det krypterte dokumentet som svar. En slik kryptering tok i gjennomsnitt XXX ms. En siste begrensning er at datamengden er begrenset til 2 kB. Det vil i praksis ofte være for lite, og dermed uansett uaktelt. Den oppskriftsmessige tinærimngen er derfor å bruke _envelope encryption_.
 
 # Envelope Encryption
 
@@ -81,11 +81,11 @@ GenerateDataKeyResult keyResult = kms.generateDataKey(
 
 ![hent-datakey-kms][hent-datakey-kms]
 
-Den ukrypterte datanøkkelen blir brukt til kryptering av dokumentet. Den krypterte datanøkkelen og det krypterte dokumentet kan da lagres sammen i DynamoDB. 
+Den ukrypterte datanøkkelen blir brukt til kryptering av dokumentet. Den krypterte datanøkkelen og det krypterte dokumentet lagres sammen i DynamoDB. 
 
 ![kryptering-og-lagring][kryptering-og-lagring]
 
-For å dekryptere dokumentet henter man først den krypterte nøkkelen fra dokumentet og sender denne til KMS for dekryptering. KMS returnerer den krypterte nøkkelen og man kan dekryptere dokumentet. 
+For å dekryptere dokumentet, henter man først den krypterte datanøkkelen sammen med dokumentet, og sender nøkkelen til KMS for dekryptering. KMS returnerer den dekrypterte nøkkelen, som brukes til å dekryptere dokumentet. 
 
 ![kryptere-datakey-kms][kryptere-datakey-kms]
 
@@ -102,33 +102,29 @@ cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(dataKey, "AES"));
 byte [] encryptedFile = cipher.doFinal(fil)
 ```
 
-Vi bestemte oss for å bruke EE til å låse flere dokumenter med den samme datanøkkelen for å begrense antall kall til KMS. På den måten trengte vi bare å hente en ny datanøkkel en gang i blant. Dette valget ledet til en diskusjon om hvor mange dokumenter som kan kryptere med samme nøkkel. Vi prøvde oss i begynnelsen med ny nøkkel per 25. dokument, det viste seg å fremteles produsere for mange kall til KMS. 
-Vi innså at vi måtte ta høyde for at hver lambda-instans ville multiplisere antallet forespørsler til KMS både ved dekryptering og kryptering. For å redusere antallet forespørsler, implementerte vi caching av datanøkler ved dekryptering. Hver gang det ble sendt en forespørsel om å dekryptere en nøkkel ble både klartekst-nøkkelen og den krypterte nøkkelen lagret i en *map*. Vi skrudde også antallet nøkler videre ned til å kunne bruke samme nøkkel på 10 prosent av dokumentene. Prosessen gikk fremdeles for sent forid vi hadde fremdeles ikke tatt helt hensyn til hvor mange kall som ville bli generert med et høyt antall *shards*. 10-prosent-grensen var heller ikke så godt gjennomtenkt, da den harde grensen på 100 kall i sekundet lett kunne overskrides dersom vi brukte mer enn 100 datanøkler. Etter å ha spurt mer erfarne kryptologer og google, bestemte vi oss for å gå for én nøkkel per tabell i DynamoDB. Det virket ikke som om dette ville gå hardt utover sikkerheten så lenge nøklene blir rullert ofte nok. I tillegg, for å spare tid når lambda-funksjonen skal kryptere beregnet skatt, gjenbrukte vi nøklene som ble cachet under dekryptering av *skatteplikt* og *skattegrunnlag*. Dette gjorde vi da vi ikke fant en enkel måte å begrense antallet datanøkler for kryptering av *beregnet skatt* til å være lavere enn antall shards. Det sparte oss også mange kall til til KMS. 
+Vi bestemte oss for å bruke EE til å låse flere dokumenter med den samme datanøkkelen for å begrense antall kall til KMS. På den måten trengte vi bare å hente en ny datanøkkel en gang i blant. Dette valget ledet til en diskusjon om hvor mange dokumenter som kan krypteres med samme nøkkel. Vi prøvde oss i begynnelsen med ny nøkkel per 25. dokument, det viste seg å fremteles produsere for mange kall til KMS. 
+Vi innså at vi måtte ta høyde for at hver lambda-instans ville multiplisere antallet forespørsler til KMS både ved dekryptering og kryptering. For å redusere antallet forespørsler, implementerte vi caching av datanøkler ved dekryptering. Hver gang det ble sendt en forespørsel om å dekryptere en nøkkel ble både klartekst-nøkkelen og den krypterte nøkkelen lagret i en *map*. Vi skrudde også antallet nøkler videre ned til å kunne bruke samme nøkkel på 10 prosent av dokumentene. Prosessen gikk fremdeles for sent forid vi hadde fremdeles ikke tatt helt hensyn til hvor mange kall som ville bli generert med et høyt antall Kinesis-delstrømmer som trigget lambda. 10-prosent-grensen var heller ikke så godt gjennomtenkt, da den harde grensen på 100 kall i sekundet lett kunne overskrides dersom vi brukte mer enn 100 datanøkler. Etter å ha spurt mer erfarne kryptologer og google, bestemte vi oss for å gå for én nøkkel per tabell i DynamoDB. Det virket ikke som om dette ville gå hardt utover sikkerheten så lenge nøklene blir rullert ofte nok. I tillegg, for å spare tid når lambda-funksjonen skal kryptere beregnet skatt, gjenbrukte vi nøklene som ble cachet under dekryptering av *skatteplikt* og *skattegrunnlag*. Dette gjorde vi fordi vi ikke fant en enkel måte å begrense antallet datanøkler for kryptering av *beregnet skatt* til å være lavere enn antall delstrømmer. Det sparte oss også mange kall til til KMS. 
 
 ![lambda-og-kms][lambda-og-kms]
 
 Etter å ha gått over til en datanøkkel per tabell, endte vi opp med hastigheter som kunne måle seg med dem vi hadde sett før vi implementerte kryptering. Krypteringsoperasjonene gikk, som ventet, raskt fordi det er et ganske små dataamengder. Det som virkelig krevde tid var dataoverføring, mer spesifikt henting av datanøkler fra KMS. Ved å begrense oss til en nøkkel per tabell, begrenset vi også kall til KMS slik at det kun var den første dekrypteringsoperasjonen i hver lambda-funksjon som sendte en forespørsel om ny nøkkel. Etter det brukte den bare den nøkkelen den hadde fått sist. Når vi i tilleg gjenbrukte nøkler for kryptering av *beregnet skatt*, ble antallet kall veldig lavt. 
 
 # Sikkerhet
-Det ER mulig å oppnå ett høyt nivå av sikkerhet for løsningen vår Ved å begrense nøkler og tilganger til “least privilege”. Kravene for dette er blant annet at nøklene kun skal kunne aksesseres fra nettet til klienten, skatteetaten i vår case, og internt i AWS løsningen. Bortset fra klienten skal kun lambda-instansene kunne lese og skrive til DynamoDB tabellene. Tilgangen til nøklene må også ha policies som begrenser hvem som kan bruke dem og hva de kan brukes til. Dette gjelder hovedsaklig CMS-en. Nøklene må også begrenses slik at ingen menneskelig konto har tilgang til dem, kun lambda prosessene skal ha tilgang til nøklene. I tillegg må bruk av nøklene logges slik at man kan sette opp alarmer som triggres hvis unormal oppførsel oppdages.
+Det ER mulig å oppnå ett høyt nivå av sikkerhet for løsningen vår Ved å begrense nøkler og tilganger til “least privilege”. Kravene for dette er blant annet at nøklene kun skal kunne aksesseres fra nettet til klienten, skatteetaten i vår case, og internt i AWS løsningen. Bortset fra klienten skal kun lambda-instansene kunne lese og skrive til DynamoDB-tabellene. Tilgangen til nøklene må også ha _policies_ som begrenser hvem som kan bruke dem og hva de kan brukes til. Dette gjelder hovedsaklig CMS-en. Nøklene må også begrenses slik at ingen menneskelig konto har tilgang til dem, kun lambda-prosessene. I tillegg må bruk av nøklene logges, slik at man kan sette opp alarmer som triggres hvis unormal oppførsel oppdages.
 
-Alle disse kravene kan oppnås ved å bruke tjenester og funksjoner i AWS og AWS KMS. For det første, det å begrense hvem som skal ha tilgang til å lese og skrive til DynamoDB settes ved å bruke AWS’ IAM tilganger. For å sette tilganger bruker man AWS’ terminal view på web, her kan man enkelt sette presise begrensninger på hvilke tilganger forskjellige instanser skal ha i systemet. Det samme gjelder for nøkler og tilgang til bruk av nøkler. 
-
-AWS Identity and Access Management (IAM) er en tjeneste som hjelper deg å sikre tilganger til de forskjellige resursene man har i AWS. Man kan legge inn brukere, grupper og roller som man kan legge rettigheter til. Brukerrettigheter var nødvendig for at vi skulle laste opp data til DynamoDB, og roller var nødvendig for å gi Lambda rettigheter mot Kinesis og DynamoDB. På samme måte kan man sette hvilke brukere eller roller som har tilgang til å bruke CMK i KMS. 
+Alle disse kravene kan oppnås ved å bruke tjenester og funksjoner i AWS og AWS KMS. AWS Identity and Access Management (IAM) er en tjeneste som hjelper deg å sikre tilganger til de forskjellige resursene man har i AWS. Man kan legge inn brukere, grupper og roller som man kan legge rettigheter til. Brukerrettigheter var nødvendig for at vi skulle laste opp data til DynamoDB, og roller var nødvendig for å gi Lambda rettigheter mot Kinesis og DynamoDB. På samme måte kan man sette hvilke brukere eller roller som har tilgang til å bruke CMK i KMS.  
 
 ![key users][key-users]
 
-CloudTrail er en tjeneste som logger API-kall mot AWS. Denne tjenesten leverer logger som gir informasjon hvem som utførte kall, tidspunkt, IP-adresse, hvilke parameter som var i forespørselen og hva AWS returnerte. CloudTrail lagrer loggene i en S3-database som er mulig å kryptere. Loggene kan også videresendes til CloudWatch, der man kan sette opp forskjellige alarmer. Vi var både innom CloudTrail og CloudWatch, men valgte å ikke gå videre med dette siden oppsettet var komplisert. 
-
+CloudTrail er en tjeneste som logger API-kall mot AWS. Denne tjenesten leverer logger som gir informasjon hvem som utførte kall, tidspunkt, IP-adresse, hvilke parameter som var i forespørselen og hva AWS returnerte. CloudTrail lagrer loggene i en S3-database som er mulig å kryptere. Loggene kan også videresendes til CloudWatch, der man kan sette opp forskjellige alarmer. 
 
 #Konstnader 
-Som de fleste tjenester fra AWS så er KMS gratis i bruk opp til 20 000 forespørsler i måneden, deretter koster hver 10 000 forespørsler 0.03$. 
+Som for de fleste tjenester fra AWS, så er KMS gratis i bruk opp til en grense. For KMS er grensen 20 000 forespørsler i måneden, deretter koster hver 10 000 forespørsler 0.03$. 
 
-Hvis vi bruker 100 shards vil regnestykker bli følgende: 
+Hvis vi bruker 100 delstrømmer vil regnestykket over forespørsler bli følgende: 
 
 ![kostnader-kms][kostnader-kms]
-Prosessen fra å laste opp kryptert data til DynamoDB, kjøre beregninger på Lambda og laste ned data og dekryptere den vil innebære 204 kall mot KMS. Det vil si at vi kan kjøre den 98 ganger i månenden gratis. Påfølgende kjøring vil enkeltvis koste 0,000612$. 
-
+Prosessen fra å laste opp kryptert data til DynamoDB, kjøre beregninger på Lambda og laste ned data og dekryptere den vil innebære 204 kall mot KMS. Det vil si at vi kan kjøre den 98 ganger i månenden gratis, uavhengig av hvor mange skattytere vi beregner. Påfølgende kjøring vil enkeltvis koste 0,000612$. 
 
 
 [kinesis-lambda]:https://bekkopen.blob.core.windows.net/attachments/1b4f1116-3702-4002-8f93-88d61d906993
