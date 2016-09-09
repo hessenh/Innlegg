@@ -57,12 +57,12 @@ I testen vår prøvde vi å laste opp 10 000 dokumenter til både *skattegrunnla
 
 Envelope Encryption (EE) går i korte trekk ut på følgende: 
 
-**Kryptering:** 
+## Kryptering:
 - Bruk en unik datanøkkel for å kryptere dokumenter. 
 - Krypter datanøkkelen med hovednøkkel (CMK)
 - Lagre det krypterte dokumentet sammen med den krypterte datanøkkelen. 
 
-**Dekryptering: **
+## Dekryptering:
 - Hent dokumentet man skal dekryptere, sammen med den kryptere datanøkkelen
 - Bruk hovednøkkelen til å dekryptere datanøkkelen.
 - Dekrypter dokumentet med datanøkkelen. 
