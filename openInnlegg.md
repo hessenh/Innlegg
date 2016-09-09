@@ -76,15 +76,15 @@ GenerateDataKeyResult keyResult = kms.generateDataKey(
                .withKeyId(keyId));
 ```
 
-![hent-datakey-kms][hent-datakey-kms]
+![hente datanøkkel fra kms][hent-datakey-kms]
 
 Den ukrypterte datanøkkelen blir brukt til kryptering av dokumentet. Den krypterte datanøkkelen og det krypterte dokumentet lagres sammen i DynamoDB.
 
-![kryptering-og-lagring][kryptering-og-lagring]
+![kryptering og lagring][kryptering-og-lagring]
 
 For å dekryptere dokumentet, henter man først den krypterte datanøkkelen sammen med dokumentet, og sender nøkkelen til KMS for dekryptering. KMS returnerer den dekrypterte nøkkelen, som brukes til å dekryptere dokumentet.
 
-![kryptere-datakey-kms][kryptere-datakey-kms]
+![dekryptere datanøkel med kms][dekryptere-datakey-kms]
 
 Dette medførte at vi måtte ta hånd om kryptering/dekryptering selv. Vi bruker Java’s innebygde [Cipher](https://docs.oracle.com/javase/7/docs/api/javax/crypto/Cipher.html) bibliotek som er basert på Bouncy Castle for kryptering. Vi bruker AES-128, med GCM mode of operation uten padding. Cipher har ikke mulighet til å bruke AES-256, og selv om det hadde vært å foretrekke, er ikke dette noe stort tap fordi 128 bit regnes som tilstrekkelig sikkerhet. Vi bruker samme metode for å kryptere både for opplasting fra klient og i lambda-funksjonen.
 
@@ -127,7 +127,7 @@ Prosessen fra å laste opp kryptert data til DynamoDB, kjøre beregninger på La
 [server-side-kms]:https://bekkopen.blob.core.windows.net/attachments/6a147708-e045-4c49-a4a3-9b3eb06d5503
 [hent-datakey-kms]:https://bekkopen.blob.core.windows.net/attachments/0e3f67b7-3559-45a3-be1c-a60b26b82e4c
 [kryptering-og-lagring]:https://bekkopen.blob.core.windows.net/attachments/b59c84b6-75e5-4e3d-98c6-6dbf01a689c8
-[kryptere-datakey-kms]:https://bekkopen.blob.core.windows.net/attachments/0cb84f4f-cc07-4652-ad45-0e6348d2e6cc
+[dekryptere-datakey-kms]:https://bekkopen.blob.core.windows.net/attachments/a469bbe3-bb0e-4f8f-a4b8-d567b6388e58
 [key-users]: https://bekkopen.blob.core.windows.net/attachments/56de4772-4a07-497c-a60c-4f333ea7a02d
 [lambda-og-kms]:https://bekkopen.blob.core.windows.net/attachments/c9e9908f-910a-4635-8ff6-b9e6c6c41a6a
 [kostnader-kms]:https://bekkopen.blob.core.windows.net/attachments/9fcb0cfc-10ab-4af7-a4d7-0f0003f0cf33
