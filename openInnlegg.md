@@ -27,7 +27,7 @@ Kinesis ble brukt som hendelsekilde for Lambda. Kinesis jobber med datastrømmer
 Hendelsesforløpet er som følger:
 
 1. Klienten laster opp *skattegrunnlag* og *skatteplikt* til DynamoDB.
-2. Klienten mater Kinesis med fødselsnumre som identifikator og fordeler de på delstrømmer.
+2. Klienten mater Kinesis med fødselsnumre som identifikator og fordeler dem på delstrømmer.
 3. Lambda-funksjonen mottar hendelser fra Kinesis-strømmer og henter *skattegrunnlag* og *skatteplikt* fra DynamoDB, beregner skatt og skriver resultat til DynamoDB.
 
 ![Illustrasjon av AWS-arkitektur][aws-arkitektur]
@@ -123,7 +123,7 @@ Prosessen fra å laste opp kryptert data til DynamoDB, kjøre beregninger på La
 
 
 [kinesis-lambda]:https://bekkopen.blob.core.windows.net/attachments/1b4f1116-3702-4002-8f93-88d61d906993
-[aws-arkitektur]:https://bekkopen.blob.core.windows.net/attachments/175c3409-bb63-4799-b219-e2adf3b2519f
+[aws-arkitektur]:https://bekkopen.blob.core.windows.net/attachments/b869be92-e71a-4499-88ba-7412e51855d1
 [server-side-kms]:https://bekkopen.blob.core.windows.net/attachments/6a147708-e045-4c49-a4a3-9b3eb06d5503
 [hent-datakey-kms]:https://bekkopen.blob.core.windows.net/attachments/0e3f67b7-3559-45a3-be1c-a60b26b82e4c
 [kryptering-og-lagring]:https://bekkopen.blob.core.windows.net/attachments/b59c84b6-75e5-4e3d-98c6-6dbf01a689c8
