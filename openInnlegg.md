@@ -1,7 +1,7 @@
 
 I et tidligere [blogginnlegg](http://open.bekk.no/jakten-pa-fem-tusen-skatteberegninger-i-sekundet) snakket vi om hvordan skatteetaten er i ferd med å utvikle en ny plattform for forskudd- og skattebergninger, som vil erstatte dagens løsning på stormaskin. Målet med den nye plattform er at den har en arkitektur som er fleksibel, skalerbar, robust, og ikke minst fremtidsrettet. En indikator på at denne løsningen er fremtidsrettet, er hvis den enkelt kan flyttes over til en allmenn skyleverandør. 
 
-For å beregne skatten til alle skatteyterne i Norge kreves *skattegrunnlag* og *skatteplikt*, typisk formatert som XML eller JSON. *Skattegrunnlag* inneholder verdiene av alt du eier, tjener, skylder og har av utgifter og fradrag, mens *skatteplikt* er relevant informasjon om deg, som alder, bosted og familieforhold.  
+For å beregne skatten til alle skatteyterne i Norge kreves *skattegrunnlag* og *skatteplikt*, typisk formatert som XML-dokumenter. *Skattegrunnlag* inneholder verdiene av alt du eier, tjener, skylder og har av utgifter og fradrag, mens *skatteplikt* er relevant informasjon om deg, som alder, bosted og familieforhold.  
 
 Stegene for skatteberegning er som følger:
 1. Hent *skattegrunnlag* og *skatteplikt*
