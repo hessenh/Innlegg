@@ -123,7 +123,7 @@ Prosessen fra å laste opp kryptert data til DynamoDB, kjøre beregninger på La
 
 
 [kinesis-lambda]:https://bekkopen.blob.core.windows.net/attachments/1b4f1116-3702-4002-8f93-88d61d906993
-[AWS-arkitektur]:https://bekkopen.blob.core.windows.net/attachments/b9a2bade-cdda-458e-92ca-8e1a9d857b19
+[AWS-arkitektur]:https://bekkopen.blob.core.windows.net/attachments/175c3409-bb63-4799-b219-e2adf3b2519f
 [server-side-kms]:https://bekkopen.blob.core.windows.net/attachments/6a147708-e045-4c49-a4a3-9b3eb06d5503
 [hent-datakey-kms]:https://bekkopen.blob.core.windows.net/attachments/0e3f67b7-3559-45a3-be1c-a60b26b82e4c
 [kryptering-og-lagring]:https://bekkopen.blob.core.windows.net/attachments/b59c84b6-75e5-4e3d-98c6-6dbf01a689c8
