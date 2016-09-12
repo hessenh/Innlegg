@@ -12,10 +12,10 @@ Ved å kjøre skatteberegningsfunksjonen for alle skatteytere i Norge vil vi kun
 
 Løsningen er bygd med Amazon Web Services (AWS). AWS har lang fartstid og stiller med en rekke tjenester. Vår arkitektur tar i bruk følgende tjenester:
 
-- DynamoDB for datalagring
-- Lambda for å kalle beregningsfunksjonen
-- Kinesis som meldingstjeneste
-- Key Manangement Service (KMS) for nøkkelhåndtering og kryptering
+-   DynamoDB for datalagring
+-   Lambda for å kalle beregningsfunksjonen
+-   Kinesis som meldingstjeneste
+-   Key Manangement Service (KMS) for nøkkelhåndtering og kryptering
 
 # AWS-arkitektur
 DynamoDB er en moderne NoSQL database som støtter et fleksibelt antall attributter, enkle og sammensatte primærnøkler og muligheten for å skrive og lese i grupper. DynamoDB har også støtte for triggere, som kaller en lambda-funksjon for endring i databasen. Lambda kjører et stykke kode når den mottar en hendelse, i vårt tilfelle, en skatteberegningsfunksjon.
@@ -26,9 +26,9 @@ Kinesis ble brukt som hendelsekilde for Lambda. Kinesis jobber med datastrømmer
 
 Hendelsesforløpet er som følger:
 
-1. Klienten laster opp *skattegrunnlag* og *skatteplikt* til DynamoDB.
-2. Klienten mater Kinesis med fødselsnumre som identifikator og fordeler dem på delstrømmer.
-3. Lambda-funksjonen mottar hendelser fra Kinesis-strømmer og henter *skattegrunnlag* og *skatteplikt* fra DynamoDB, beregner skatt og skriver resultat til DynamoDB.
+1.  Klienten laster opp *skattegrunnlag* og *skatteplikt* til DynamoDB.
+2.  Klienten mater Kinesis med fødselsnumre som identifikator og fordeler dem på delstrømmer.
+3.  Lambda-funksjonen mottar hendelser fra Kinesis-strømmer og henter *skattegrunnlag* og *skatteplikt* fra DynamoDB, beregner skatt og skriver resultat til DynamoDB.
 
 ![Illustrasjon av AWS-arkitektur][aws-arkitektur]
 
@@ -49,20 +49,21 @@ ByteBuffer ciphertext = kms.encrypt(req).getCiphertextBlob();
 ```
 
 ![krypterer med customer master key][server-side-kms]
+
 I testen vår prøvde vi å laste opp 10 000 dokumenter til både *skattegrunnlag*- og *skatteplikt*-tabellene etter å ha kryptert dem. Det første vi oppdaget var at KMS ga feilmelding om at tjenesten bare godtar 100 forespørsler i sekundet. Et annet problem med denne løsningen var at for å kryptere et dokument måtte man sende det til KMS for så å få det krypterte dokumentet som svar. En siste begrensning er at datamengden er begrenset til 2 kB. Det vil i praksis ofte være for lite, og dermed uansett uaktelt. Den oppskriftsmessige tinærimngen er derfor å bruke *envelope encryption*.
 
 # Envelope Encryption
 Envelope Encryption (EE) går i korte trekk ut på følgende:
 
 ## Kryptering:
-- Bruk en unik datanøkkel for å kryptere dokumenter.
-- Krypter datanøkkelen med hovednøkkel (CMK)
-- Lagre det krypterte dokumentet sammen med den krypterte datanøkkelen.
+-   Bruk en unik datanøkkel for å kryptere dokumenter.
+-   Krypter datanøkkelen med hovednøkkel (CMK)
+-   Lagre det krypterte dokumentet sammen med den krypterte datanøkkelen.
 
 ## Dekryptering:
-- Hent dokumentet man skal dekryptere, sammen med den kryptere datanøkkelen
-- Bruk hovednøkkelen til å dekryptere datanøkkelen.
-- Dekrypter dokumentet med datanøkkelen.
+-   Hent dokumentet man skal dekryptere, sammen med den kryptere datanøkkelen
+-   Bruk hovednøkkelen til å dekryptere datanøkkelen.
+-   Dekrypter dokumentet med datanøkkelen.
 
 På forespørsel om å generere en unik datanøkkel, vil KMS returnere en datanøkkel og en kryptert versjon av denne.
 
@@ -113,13 +114,13 @@ Alle disse kravene kan oppnås ved å bruke tjenester og funksjoner i AWS og AWS
 
 CloudTrail er en tjeneste som logger API-kall mot AWS. Denne tjenesten leverer logger som gir informasjon hvem som utførte kall, tidspunkt, IP-adresse, hvilke parameter som var i forespørselen og hva AWS returnerte. CloudTrail lagrer loggene i en S3-database som er mulig å kryptere. Loggene kan også videresendes til CloudWatch, der man kan sette opp forskjellige alarmer.
 
-#Konstnader
+# Konstnader
 Som for de fleste tjenester fra AWS, så er KMS gratis i bruk opp til en grense. For KMS er grensen 20 000 forespørsler i måneden, deretter koster hver 10 000 forespørsler 0.03$.
 
 Hvis vi bruker 100 delstrømmer vil regnestykket over forespørsler bli følgende:
 
 ![kostnader-kms][kostnader-kms]
-Prosessen fra å laste opp kryptert data til DynamoDB, kjøre beregninger på Lambda og laste ned data og dekryptere den vil innebære 204 kall mot KMS. Det vil si at vi kan kjøre den 98 ganger i månenden gratis, uavhengig av hvor mange skattytere vi beregner. Påfølgende kjøring vil enkeltvis koste 0,000612$.
+Prosessen fra å laste opp kryptert data til DynamoDB, kjøre beregninger på Lambda og laste ned data og dekryptere den vil innebære 204 kall mot KMS. Det vil si at vi kan kjøre den 98 ganger i månenden gratis, uavhengig av hvor mange skattytere vi beregner. Påfølgende kjøring vil enkeltvis koste $0,000612.
 
 
 [kinesis-lambda]:https://bekkopen.blob.core.windows.net/attachments/1b4f1116-3702-4002-8f93-88d61d906993
