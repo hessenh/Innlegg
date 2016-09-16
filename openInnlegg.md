@@ -114,6 +114,11 @@ Alle disse kravene kan oppnås ved å bruke tjenester og funksjoner i AWS og AWS
 
 CloudTrail er en tjeneste som logger API-kall mot AWS. Denne tjenesten leverer logger som gir informasjon hvem som utførte kall, tidspunkt, IP-adresse, hvilke parameter som var i forespørselen og hva AWS returnerte. CloudTrail lagrer loggene i en S3-database som er mulig å kryptere. Loggene kan også videresendes til CloudWatch, der man kan sette opp forskjellige alarmer.
 
+# Skyen vs. on premise
+Det er naturlig at man, til tross for at sikkerheten virker solid, fremdeles føler at det er tryggere å ha dataen sin on premise. Problemet med å lagre og behandle data i skyen er at man ikke kan vite helt sikkert om det man nettop slettet faktisk ble slettet, eller om prosessen faktisk ble avlsuttet. Alt blir mindre hpndfast og man må stole på at leverandøren av skytjenesten gjør jobben sin. Det kan være vanskelig å gjøre når store aktører Apple gjør glipper som [denne](https://en.wikipedia.org/wiki/ICloud_leaks_of_celebrity_photos).
+
+Selv om enkelte skytjenester, som Apples iCloud har kommet i nyhetene for sikkerhetsbrudd, er ikke det ensbetydende med at alle skytjenester er usikre. I vår case brukes Amazon sine skytjenester. Sky har blitt et veldig viktig segment for Amazon og den store markedsandelen de har nå avhenger av at de er i stand til å tilby en sikker tjeneste til kundene sine.
+
 # Konstnader
 Som for de fleste tjenester fra AWS, så er KMS gratis i bruk opp til en grense. For KMS er grensen 20 000 forespørsler i måneden, deretter koster hver 10 000 forespørsler 0.03$.
 
