@@ -115,7 +115,7 @@ Alle disse kravene kan oppnås ved å bruke tjenester og funksjoner i AWS og AWS
 CloudTrail er en tjeneste som logger API-kall mot AWS. Denne tjenesten leverer logger som gir informasjon hvem som utførte kall, tidspunkt, IP-adresse, hvilke parameter som var i forespørselen og hva AWS returnerte. CloudTrail lagrer loggene i en S3-database som er mulig å kryptere. Loggene kan også videresendes til CloudWatch, der man kan sette opp forskjellige alarmer.
 
 # Kostnader
-Som for de fleste tjenester fra AWS, så er KMS gratis i bruk opp til en grense. For KMS er grensen 20 000 forespørsler i måneden, deretter koster hver 10 000 forespørsler 0.03$.
+Som for de fleste tjenester fra AWS, så er KMS gratis i bruk opp til en grense. For KMS er grensen 20 000 forespørsler i måneden, deretter koster hver 10 000 forespørsler $0.03.
 
 Hvis vi bruker 100 delstrømmer vil regnestykket over forespørsler bli følgende:
 
